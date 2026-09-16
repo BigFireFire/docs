@@ -1,7 +1,7 @@
 ---
-title: "POST /api/v1/order/create — Create a New Order"
+title: "Place a New Product Order — POST /api/v1/order/create"
 sidebarTitle: "Create Order"
-description: "POST /api/v1/order/create — Creates a new order. Accepts goodsId, buyNum, and addressId. Returns orderNo and orderAmount on success."
+description: "Place a new product order by supplying a product ID, quantity, and shipping address. Receive a unique orderNo and total amount on success."
 ---
 
 The Create Order endpoint lets you programmatically place an order for any product listed on the Bocha platform. You supply the product identifier, the quantity you want, and a saved shipping address — Bocha validates stock availability and returns a unique order number along with the total amount charged. Keep the returned `orderNo`; you will need it for payment and status tracking.
@@ -27,14 +27,6 @@ The Create Order endpoint lets you programmatically place an order for any produ
 </Warning>
 
 ### Example Request
-
-```json
-{
-  "goodsId": 1008,
-  "buyNum": 2,
-  "addressId": 305
-}
-```
 
 <CodeGroup>
 

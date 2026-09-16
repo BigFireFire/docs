@@ -1,7 +1,7 @@
 ---
-title: "Create and Manage Orders with the Bocha API"
+title: "Create and Query Orders Using the Bocha Orders API"
 sidebarTitle: "Manage Orders"
-description: "Learn how to create orders, query order status, and interpret order responses using the Bocha order management API."
+description: "Learn how to place new orders, query their current status, and handle error responses using the Bocha order management API endpoints."
 ---
 
 Every purchase on the Bocha platform flows through the order lifecycle: you create an order with a product and delivery address, Bocha reserves the inventory and calculates the total, and the resulting order number becomes your permanent reference for status checks and payment reconciliation. Understanding this lifecycle helps you build reliable integrations that stay in sync with order state from creation through fulfilment.
@@ -173,6 +173,10 @@ When an order cannot be created or queried, the `code` field in the response ind
 <Warning>
   Always set `buyNum` to `1` or higher. Sending `0` or a negative value will result in a validation error and the order will not be created.
 </Warning>
+
+<Note>
+  Error code `40001` is confirmed. Codes `40002`, `40003`, `40004`, and `40100` represent common error scenarios and are provided as illustrative guidance — always inspect the `msg` field in the actual response for the authoritative description.
+</Note>
 
 | Error Code | Meaning                   | Recommended action                                                      |
 |------------|---------------------------|-------------------------------------------------------------------------|

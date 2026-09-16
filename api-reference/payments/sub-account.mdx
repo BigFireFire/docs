@@ -1,7 +1,7 @@
 ---
-title: "POST /api/v1/payment/sub-account — Bank Sub-Account Payment"
+title: "Bank Sub-Account Payment — POST /api/v1/payment/sub-account"
 sidebarTitle: "Sub-Account"
-description: "POST /api/v1/payment/sub-account — Initiate a bank sub-account payment. Requires verified business account. Returns order_flow_no for transaction tracking."
+description: "Settle an order via bank sub-account transfer. Requires completed business verification. Returns a unique order_flow_no for bank reconciliation."
 ---
 
 The Bank Sub-Account Payment endpoint allows your business to settle orders via a dedicated bank sub-account transfer. This payment method is designed for enterprises that require bank-reconcilable transaction records: each successful call returns an `order_flow_no` that uniquely identifies the transfer on the banking side, making it straightforward to match payments against your own ledger or accounting system.
@@ -49,12 +49,16 @@ curl --request POST \
   HTTP-style status code. `200` indicates the payment was initiated successfully.
 </ResponseField>
 
+<ResponseField name="msg" type="string">
+  Human-readable status message accompanying the response code.
+</ResponseField>
+
 <ResponseField name="data" type="object">
   Contains the transaction tracking details on success, or `null` on error.
 
   <Expandable title="data fields">
     <ResponseField name="order_flow_no" type="string">
-      A unique bank-side transaction identifier, up to 36 characters (varchar 36). Bocha generates this value at the time of payment initiation. Store it immediately — you will need it to reconcile this payment in your bank records and to look up the transaction via the Payment Records endpoint.
+      A unique bank-side transaction identifier, up to 36 characters. Bocha generates this value at the time of payment initiation. Store it immediately — you will need it to reconcile this payment in your bank records and to look up the transaction via the Payment Records endpoint.
     </ResponseField>
   </Expandable>
 </ResponseField>

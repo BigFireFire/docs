@@ -24,6 +24,10 @@ HTTP status codes give you a high-level signal about how the server handled your
 
 Even when the HTTP status is `200`, the `code` field in the response body may indicate an application-level error. Always check `code` independently of the HTTP status.
 
+<Note>
+  The table below lists confirmed codes (`200`, `40001`) alongside other common application-level codes you may encounter. The `msg` field in each response provides the authoritative description — always log and inspect it alongside the `code` value.
+</Note>
+
 | Code | Message | Description | Recommended Action |
 |---|---|---|---|
 | `200` | `success` | The request completed successfully. | No action needed. |
@@ -50,3 +54,14 @@ Follow these guidelines when integrating with the Bocha API to build a resilient
 <Tip>
   If you encounter an error you can't resolve using this guide, reach out to the Bocha support team at **support@bocha.ai** with your account email, the affected API endpoint, the full request (redact your API key), and the complete response body. The more detail you provide, the faster the team can help.
 </Tip>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="FAQ" icon="circle-question" href="/support/faq">
+    Find answers to common questions about API keys, payments, verification, and orders.
+  </Card>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Learn how to authenticate your API requests using Bearer tokens and manage your API keys.
+  </Card>
+</CardGroup>

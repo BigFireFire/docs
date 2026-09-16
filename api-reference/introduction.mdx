@@ -47,7 +47,7 @@ Every response from the Bocha API — whether successful or not — is wrapped i
 {
   "code": 200,
   "msg": "success",
-  "data": { ... }
+  "data": { }
 }
 ```
 
@@ -65,11 +65,24 @@ Every response from the Bocha API — whether successful or not — is wrapped i
 
 ## Available Endpoints
 
+The table below lists every public endpoint in the Bocha API. All paths are relative to `https://api.bocha.ai`.
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| `POST` | `/api/v1/order/create` | Create a new order for a Bocha API product. |
+| `GET` | `/api/v1/order/query` | Query the status and details of an existing order. |
+| `POST` | `/api/v1/verification/submit` | Submit a user identity verification request. |
+| `GET` | `/api/v1/verification/status` | Retrieve the current verification status for a user. |
+| `POST` | `/api/v1/payment/sub-account` | Fund or manage a payment sub-account. |
+| `GET` | `/api/v1/payment/record` | Retrieve payment and transaction records for your account. |
+
+Explore each section for full request and response documentation:
+
 <CardGroup cols={2}>
   <Card title="Orders" icon="cart-shopping" href="/api-reference/orders/create">
     Create and query orders for Bocha API products. Manage purchase quantities and track order status in real time.
   </Card>
-  <Card title="Payments" icon="credit-card" href="/api-reference/payments/sub-account">
+  <Card title="Payments" icon="credit-card" href="/api-reference/payments/overview">
     Manage sub-account funding and retrieve detailed payment and transaction records for your account.
   </Card>
   <Card title="Verification" icon="shield-check" href="/api-reference/verification/submit">

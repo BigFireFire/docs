@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/order/query — Query Order Status"
+title: "Query Order Details and Status — GET /api/v1/order/query"
 sidebarTitle: "Query Order"
-description: "GET /api/v1/order/query — Retrieve the status and details of an existing order using its order number. Returns order status and amount."
+description: "Retrieve the current status and full details of an existing Bocha order by its order number. Confirm payment, fulfillment progress, or reconcile records."
 ---
 
 The Query Order endpoint lets you retrieve the current status and full details of any order you have placed through the Bocha platform. Pass the `orderNo` you received when the order was created and the API returns the latest state of that order — useful for confirming payment receipt, checking fulfillment progress, or reconciling records in your own system.

@@ -1,7 +1,7 @@
 ---
-title: "Bocha Payment Methods and Payment Lifecycle"
+title: "Bocha Payment Methods, Types, and Record Lifecycle"
 sidebarTitle: "Payments"
-description: "Explore the payment methods Bocha supports, how payment records work, and the meaning of pay_type values in API responses."
+description: "Explore all payment methods Bocha supports, how payment records are structured, and what every pay_type value means in the API response."
 ---
 
 Bocha's payment system is designed to accommodate a wide range of settlement preferences — from mainstream mobile wallets to bank sub-account flows and voucher-based redemptions. Every payment is recorded as a structured object linked to an order, giving you a complete audit trail from purchase intent to settlement. Understanding the `pay_type` field and the lifecycle of a payment record will help you build reliable integrations and handle edge cases correctly.
@@ -41,7 +41,7 @@ Redemption codes let users pay for orders using pre-issued vouchers. To apply a 
 <Accordion title="How redemption code validation works">
   When you submit a redemption code, Bocha checks the following before accepting the payment:
 
-  1. **Existence** — The code must exist in the platform's voucher registry.
+  1. **Existence** — The code must be a valid, recognised code issued by Bocha.
   2. **Validity period** — The code must not be expired at the time of submission.
   3. **Usage limit** — Single-use codes are invalidated immediately after their first successful redemption; multi-use codes decrement their remaining count.
   4. **Denomination match** — If the code covers only a partial amount, the remaining balance must be settled through another payment method in the same transaction.

@@ -1,7 +1,7 @@
 ---
-title: "How Bocha Works: Platform Concepts Overview"
+title: "How Bocha Works: API Structure and Platform Concepts"
 sidebarTitle: "Overview"
-description: "Understand Bocha's core platform concepts: the open API structure, resource hierarchy, request/response format, and how services fit together."
+description: "Understand Bocha's core platform concepts: the open API structure, resource hierarchy, request/response envelope format, and how services fit together."
 ---
 
 Bocha is an AI-powered search and open API platform built around a single, consistent REST interface. Every capability — from search to payments to identity verification — is exposed through the same base URL (`https://api.bocha.ai`), authenticated with a Bearer token, and returns responses in a predictable JSON envelope. Understanding this shared architecture makes it faster to integrate any part of the platform, because the patterns you learn in one area carry directly to the next.
@@ -30,7 +30,7 @@ Always check `code` before processing `data`. A successful HTTP `200` response f
 
 ## Key resources
 
-Bocha organises its API surface into four primary resource types. Each has its own set of endpoints, but all share the common envelope format and authentication model described above.
+Bocha organises its API surface into three primary resource types. Each has its own set of endpoints, but all share the common envelope format and authentication model described above.
 
 <CardGroup cols={2}>
   <Card title="Orders" icon="cart-shopping">
@@ -40,10 +40,7 @@ Bocha organises its API surface into four primary resource types. Each has its o
     Record the settlement of an order. Payments carry a `pay_type` that identifies the method used — WeChat Pay, Alipay, UnionPay, redemption code, bank sub-account, or manual admin processing.
   </Card>
   <Card title="Verification" icon="shield-check">
-    Capture identity checks for individual users and businesses. Verification is a prerequisite for certain payment methods and unlocks higher platform limits.
-  </Card>
-  <Card title="Users" icon="user">
-    Represent authenticated principals on the platform. Users own API keys, may hold sub-accounts, and accumulate orders and verification records over time.
+    Capture identity checks for individual users and businesses. Verification is a prerequisite for certain payment methods, including bank sub-account payments, and unlocks higher platform limits.
   </Card>
 </CardGroup>
 

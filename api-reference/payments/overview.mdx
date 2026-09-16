@@ -1,5 +1,5 @@
 ---
-title: "Bocha Payments API: Methods and Payment Records"
+title: "Bocha Payments API: Supported Pay Types and Records"
 sidebarTitle: "Overview"
 description: "Reference for the Bocha Payments API. Learn supported pay_type values, how to retrieve payment records, and what each payment field means."
 ---
@@ -17,7 +17,7 @@ Every payment record includes a `pay_type` field that identifies which payment m
 | `2` | UnionPay | Card-based UnionPay transaction |
 | `3` | Redemption Code | Voucher-based; no monetary transfer |
 | `4` | Bank Sub-Account | `order_flow_no` is populated for this type only |
-| `-1` | Manual | Processed directly by a Bocha administrator |
+| `-1` | Manual | Applied manually; no self-service payment flow |
 
 <Note>
   `order_flow_no` is only populated when `pay_type = 4` (Bank Sub-Account). For all other payment methods this field is `null`.

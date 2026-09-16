@@ -1,7 +1,7 @@
 ---
 title: "POST /api/v1/verification/submit — Submit Verification"
 sidebarTitle: "Submit"
-description: "POST /api/v1/verification/submit — Submit identity or business verification details. Accepts bank account info and returns a verificationId and pending status."
+description: "Submit identity or business verification details to Bocha. Provide bank account info to initiate review and receive a verificationId with pending status."
 ---
 
 Before you can use bank sub-account payments on the Bocha platform, you must complete identity or business verification. This endpoint accepts your bank account details — including account number, account holder name, account type, and opening date — and initiates the review process. Once submitted, you receive a `verificationId` and an initial status of `pending`, which you can use to track your verification through to approval.
@@ -14,11 +14,11 @@ Before you can use bank sub-account payments on the Bocha platform, you must com
   Verification type. Use `0` for business verification or `1` for personal verification.
 </ParamField>
 
-<ParamField body="account_no" type="string">
+<ParamField body="account_no" type="string" required>
   The bank account number to verify. Ensure this matches the account registered under the provided account holder name.
 </ParamField>
 
-<ParamField body="account_name" type="string">
+<ParamField body="account_name" type="string" required>
   Account holder name exactly as registered with the bank. For business accounts, use the registered legal entity name.
 </ParamField>
 

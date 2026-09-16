@@ -1,5 +1,5 @@
 ---
-title: "User Identity Verification on Bocha"
+title: "Identity Verification for Individuals and Businesses"
 sidebarTitle: "Verification"
 description: "Learn how Bocha's identity verification works for individuals and businesses, what information is required, and how verification status is tracked."
 ---
@@ -36,7 +36,7 @@ Regardless of verification type, you submit the following fields. Ensure every f
 | `account_no` | string | The bank account number to verify. Must be the full account number with no spaces or separators. |
 | `account_name` | string | The name of the account holder as registered with the bank. For business accounts, use the full legal entity name. |
 | `account_open_type` | integer | Identifies whether the account belongs to a business or an individual. `0` = Business, `1` = Personal. |
-| `account_apply_date` | datetime | The date the bank account was opened, in ISO 8601 format. This is used as an additional verification signal by the banking network. |
+| `account_apply_date` | string | The date the bank account was opened, formatted as an ISO 8601 date string (e.g. `2022-03-15`). Used as an additional verification signal by the banking network. |
 
 ## Verification states
 
