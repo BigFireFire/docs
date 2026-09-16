@@ -1,0 +1,57 @@
+---
+title: "Bocha Accounts: Users, API Keys, and Permissions"
+sidebarTitle: "Accounts"
+description: "Learn how Bocha accounts work, how to manage API keys, and how user roles and sub-accounts are structured on the platform."
+---
+
+Every interaction with Bocha starts with an account. Your account is the root of your identity on the platform — it holds your API keys, determines which features you can access, and owns any sub-accounts or payment records you create. Whether you are an individual developer experimenting with the search API or an organisation running high-volume workflows, the same account model applies; the difference lies in the account type you register and the verification you complete.
+
+## Account types
+
+Bocha supports two account types, each suited to different use cases and carrying different verification requirements.
+
+<Tabs>
+  <Tab title="Personal accounts">
+    Personal accounts are intended for individual developers and end users. You register with your own identity, and any API usage, orders, and payments are attributed directly to you. Personal accounts are the fastest way to get started — you can generate an API key and make your first request within minutes.
+
+    For identity verification on a personal account, you provide personal bank account details with `account_open_type` set to `1`.
+  </Tab>
+  <Tab title="Business accounts">
+    Business accounts are designed for organisations that need to manage multiple users, higher usage limits, or bank sub-account payment flows. Business account verification requires company bank account details with `account_open_type` set to `0`.
+
+    Business accounts also unlock the bank sub-account payment method (`pay_type = 4`), which lets you associate individual payment flows with discrete sub-accounts tracked by `order_flow_no`.
+  </Tab>
+</Tabs>
+
+## API keys
+
+Your API key is the credential that authenticates every request you send to `https://api.bocha.ai`. Pass it as a Bearer token in the `Authorization` header:
+
+```http
+Authorization: Bearer <your-api-key>
+```
+
+Keep the following in mind when working with API keys:
+
+- **Scope** — A key grants access to all endpoints available to your account type. There are no per-endpoint key scopes, so treat each key as a full-access credential.
+- **Storage** — Never embed API keys directly in client-side code, public repositories, or logs. Store them in environment variables or a secrets manager.
+- **Rotation** — Generate a new key and retire the old one on a regular cadence, or immediately after any suspected exposure.
+
+<Tip>
+  Rotate your API keys on a regular schedule — at minimum every 90 days — and immediately whenever a key may have been exposed. Retiring a compromised key revokes access for any party that obtained it without requiring changes to the rest of your integration.
+</Tip>
+
+## Sub-accounts
+
+Sub-accounts are a feature of business accounts that let you model distinct payment identities within a single parent account. Each sub-account can initiate payments independently, and every bank sub-account transaction is assigned a unique `order_flow_no` — a bank transaction flow number you can use to reconcile payments against your internal records.
+
+Sub-account payments use `pay_type = 4` in Bocha's payment system. Before a sub-account can make its first payment, the parent business account must complete identity verification. See the [Verification](/concepts/verification) page for details on what information is required.
+
+<CardGroup cols={2}>
+  <Card title="Manage API Keys" icon="key" href="/authentication">
+    Learn how to generate, view, and revoke API keys in the Bocha dashboard and via the API.
+  </Card>
+  <Card title="Sub-Account Payments" icon="building-columns" href="/guides/sub-accounts">
+    Set up bank sub-accounts, initiate sub-account payments, and reconcile transactions using `order_flow_no`.
+  </Card>
+</CardGroup>

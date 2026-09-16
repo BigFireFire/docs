@@ -1,0 +1,81 @@
+---
+title: "Bocha REST API Reference and Getting Started"
+sidebarTitle: "Introduction"
+description: "Complete reference for the Bocha REST API. Learn about the base URL, request format, response envelope, versioning, and available endpoints."
+---
+
+The Bocha REST API gives you programmatic access to Bocha's AI-powered search and open API services, including order management, payment processing, and user verification. Every capability available on the Bocha platform is exposed through a consistent, versioned HTTP interface — so you can integrate Bocha into your own applications, automate workflows, and build on top of our infrastructure with confidence.
+
+## Base URL
+
+All API requests are made to the following base URL:
+
+```
+https://api.bocha.ai
+```
+
+Every endpoint is versioned under the `/api/v1/` path prefix. For example, to create an order you send a request to:
+
+```
+https://api.bocha.ai/api/v1/order/create
+```
+
+<Note>
+  The current API version is **v1**. When breaking changes are introduced, a new version prefix (e.g. `/api/v2/`) will be released alongside the existing version, giving you time to migrate. Deprecation timelines are announced in the changelog at least 90 days in advance.
+</Note>
+
+## Request Format
+
+For `POST` requests, send a JSON body and include the `Content-Type: application/json` header. `GET` requests pass parameters as query string values and do not require a `Content-Type` header.
+
+All requests must also include a valid `Authorization` header. See the [Authentication](/api-reference/authentication) page for details.
+
+Here is an example of the headers you should include with every `POST` request:
+
+```http
+POST /api/v1/order/create HTTP/1.1
+Host: api.bocha.ai
+Content-Type: application/json
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Response Format
+
+Every response from the Bocha API — whether successful or not — is wrapped in a standard envelope object. This means you can always rely on the same top-level shape, regardless of which endpoint you call.
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": { ... }
+}
+```
+
+<ResponseField name="code" type="number" required>
+  A numeric application-level status code. A value of `200` indicates success. Any other value indicates an error. Always check this field — do not rely on the HTTP status code alone.
+</ResponseField>
+
+<ResponseField name="msg" type="string" required>
+  A human-readable message describing the result of the request. On success this is typically `"success"`. On errors it describes what went wrong.
+</ResponseField>
+
+<ResponseField name="data" type="object | null" required>
+  The response payload. On success, this contains the endpoint-specific result object. On errors, this field is `null`.
+</ResponseField>
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Orders" icon="cart-shopping" href="/api-reference/orders/create">
+    Create and query orders for Bocha API products. Manage purchase quantities and track order status in real time.
+  </Card>
+  <Card title="Payments" icon="credit-card" href="/api-reference/payments/sub-account">
+    Manage sub-account funding and retrieve detailed payment and transaction records for your account.
+  </Card>
+  <Card title="Verification" icon="shield-check" href="/api-reference/verification/submit">
+    Submit user identity verification requests and poll for the current verification status of a user.
+  </Card>
+  <Card title="Errors" icon="circle-exclamation" href="/api-reference/errors">
+    Understand API error codes, HTTP status codes, and how to handle and troubleshoot common failures.
+  </Card>
+</CardGroup>

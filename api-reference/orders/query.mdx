@@ -1,0 +1,69 @@
+---
+title: "GET /api/v1/order/query — Query Order Status"
+sidebarTitle: "Query Order"
+description: "GET /api/v1/order/query — Retrieve the status and details of an existing order using its order number. Returns order status and amount."
+---
+
+The Query Order endpoint lets you retrieve the current status and full details of any order you have placed through the Bocha platform. Pass the `orderNo` you received when the order was created and the API returns the latest state of that order — useful for confirming payment receipt, checking fulfillment progress, or reconciling records in your own system.
+
+**`GET`** `https://api.bocha.ai/api/v1/order/query`
+
+<Tip>
+  Save the `orderNo` from every Create Order response at the point of creation. It is the sole identifier accepted by this endpoint and cannot be recovered if lost.
+</Tip>
+
+## Request
+
+<ParamField query="orderNo" type="string" required>
+  The unique order number returned by the Create Order endpoint when the order was placed (e.g. `ORD20260729001256`).
+</ParamField>
+
+### Example Request
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.bocha.ai/api/v1/order/query?orderNo=ORD20260729001256' \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="code" type="number">
+  HTTP-style status code. `200` indicates the order was found and returned successfully.
+</ResponseField>
+
+<ResponseField name="msg" type="string">
+  Human-readable status message accompanying the response code.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Contains the full order record on success, or `null` if the order number is not found.
+
+  <Expandable title="data fields">
+    <ResponseField name="orderNo" type="string">
+      The unique order number that identifies this order, matching the value you supplied in the query parameter.
+    </ResponseField>
+
+    <ResponseField name="orderAmount" type="number">
+      Total monetary amount for this order in CNY, as calculated at the time the order was created.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Current lifecycle status of the order. Common values include `PENDING` (awaiting payment), `PAID` (payment confirmed), `FULFILLED` (goods dispatched), and `CANCELLED`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "orderNo": "ORD20260729001256",
+    "orderAmount": 199.80,
+    "status": "PAID"
+  }
+}
+```

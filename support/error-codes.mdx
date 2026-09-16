@@ -1,0 +1,52 @@
+---
+title: "Bocha API Error Codes and Troubleshooting Guide"
+sidebarTitle: "Error Codes"
+description: "Complete reference for Bocha API error codes, HTTP status codes, and recommended actions to resolve common API errors and integration issues."
+---
+
+When a Bocha API call cannot be completed successfully, the platform returns a structured JSON error response that tells you exactly what went wrong. Every response — whether a success or a failure — follows the same envelope format: `{ "code": <number>, "msg": "<message>", "data": null }`. The `code` field carries the application-level result (not necessarily the HTTP status), `msg` provides a human-readable description, and `data` is `null` for all error responses. Use both the HTTP status code and the `code` field together to diagnose and resolve issues efficiently.
+
+## HTTP Status Codes
+
+HTTP status codes give you a high-level signal about how the server handled your request. Use these as a first triage step before inspecting the response body.
+
+| HTTP Status | Meaning | Recommended Action |
+|---|---|---|
+| 200 | OK | Request succeeded — inspect the `code` field in the body for application-level results. |
+| 400 | Bad Request | Your request body or query parameters are malformed — review the API reference and correct your input. |
+| 401 | Unauthorized | Your API key is missing or invalid — verify the `Authorization: Bearer` header is present and correct. |
+| 403 | Forbidden | Your account lacks permission for this operation — check your account tier or contact support. |
+| 404 | Not Found | The endpoint path or requested resource does not exist — check the URL and any resource identifiers. |
+| 429 | Too Many Requests | You have exceeded the rate limit — implement exponential backoff and reduce request frequency. |
+| 500 | Internal Server Error | An unexpected error occurred on Bocha's side — wait briefly, then retry; contact support if the issue persists. |
+
+## Application Error Codes
+
+Even when the HTTP status is `200`, the `code` field in the response body may indicate an application-level error. Always check `code` independently of the HTTP status.
+
+| Code | Message | Description | Recommended Action |
+|---|---|---|---|
+| `200` | `success` | The request completed successfully. | No action needed. |
+| `40001` | `商品库存不足` (Insufficient stock) | The requested product does not have enough inventory to fulfil the order. | Reduce `buyNum` to match available stock, choose an alternative product, or retry after stock is replenished. |
+| `40002` | `Invalid address` | The address associated with the order could not be found. | Verify that `addressId` is correct and belongs to your account. |
+| `40003` | `Invalid goods` | The specified product could not be found. | Verify that `goodsId` is correct and that the product is still available in the catalog. |
+| `40101` | `Unauthorized` | The API key is missing, expired, or invalid. | Check that the `Authorization` header is set to `Bearer YOUR_API_KEY` with a valid, active key. |
+| `40301` | `Verification required` | The operation requires identity verification, which has not been completed. | Complete the KYC verification process in the dashboard before retrying. |
+| `50000` | `Server error` | An internal error occurred on the Bocha platform. | Wait a moment and retry the request; contact support if the error continues. |
+
+## Error Handling Best Practices
+
+Follow these guidelines when integrating with the Bocha API to build a resilient, production-ready application:
+
+- **Always check the `code` field, not just the HTTP status.** A response with HTTP `200` can still contain a non-success application code. Your error-handling logic must inspect `code` in the response body on every call.
+- **Log the full response body for debugging.** The `msg` field and any additional fields in the response body contain context that is essential for diagnosing issues. Store the complete raw response alongside your request parameters in your logs.
+- **Implement exponential backoff for `429` and `5xx` errors.** Transient failures and rate-limit responses should be retried with increasing delays — for example, 1 s, 2 s, 4 s, 8 s — up to a defined maximum. Avoid fixed-interval or tight-loop retries, which will worsen rate-limit pressure.
+- **Never expose error messages to end users.** Messages like `商品库存不足` or raw stack traces are intended for developers. Map error codes to user-friendly messages in your own application layer before surfacing anything to customers.
+
+<Note>
+  **Rate limiting and `429` responses:** Bocha enforces per-key rate limits to ensure platform stability for all users. If you receive a `429 Too Many Requests` response, stop sending requests immediately and apply exponential backoff before retrying. Consider caching responses where appropriate and batching requests to stay within your quota. If you consistently hit rate limits under normal usage, contact support to discuss a higher-tier plan.
+</Note>
+
+<Tip>
+  If you encounter an error you can't resolve using this guide, reach out to the Bocha support team at **support@bocha.ai** with your account email, the affected API endpoint, the full request (redact your API key), and the complete response body. The more detail you provide, the faster the team can help.
+</Tip>

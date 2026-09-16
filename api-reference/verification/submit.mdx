@@ -1,0 +1,128 @@
+---
+title: "POST /api/v1/verification/submit — Submit Verification"
+sidebarTitle: "Submit"
+description: "POST /api/v1/verification/submit — Submit identity or business verification details. Accepts bank account info and returns a verificationId and pending status."
+---
+
+Before you can use bank sub-account payments on the Bocha platform, you must complete identity or business verification. This endpoint accepts your bank account details — including account number, account holder name, account type, and opening date — and initiates the review process. Once submitted, you receive a `verificationId` and an initial status of `pending`, which you can use to track your verification through to approval.
+
+**`POST /api/v1/verification/submit`**
+
+## Request
+
+<ParamField body="type" type="integer" required>
+  Verification type. Use `0` for business verification or `1` for personal verification.
+</ParamField>
+
+<ParamField body="account_no" type="string">
+  The bank account number to verify. Ensure this matches the account registered under the provided account holder name.
+</ParamField>
+
+<ParamField body="account_name" type="string">
+  Account holder name exactly as registered with the bank. For business accounts, use the registered legal entity name.
+</ParamField>
+
+<ParamField body="account_open_type" type="integer">
+  The type of bank account. Use `0` for a business account or `1` for a personal account.
+</ParamField>
+
+<ParamField body="account_apply_date" type="string">
+  The date the bank account was opened, in ISO 8601 format (e.g., `2024-01-15T00:00:00Z`).
+</ParamField>
+
+### Example Request Body
+
+```json
+{
+  "type": 0,
+  "account_no": "6225880123456789",
+  "account_name": "Acme Corp",
+  "account_open_type": 0,
+  "account_apply_date": "2024-01-15T00:00:00Z"
+}
+```
+
+### Code Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url https://api.bocha.ai/api/v1/verification/submit \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "type": 0,
+    "account_no": "6225880123456789",
+    "account_name": "Acme Corp",
+    "account_open_type": 0,
+    "account_apply_date": "2024-01-15T00:00:00Z"
+  }'
+```
+
+```python Python
+import requests
+
+url = "https://api.bocha.ai/api/v1/verification/submit"
+headers = {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json"
+}
+payload = {
+    "type": 0,
+    "account_no": "6225880123456789",
+    "account_name": "Acme Corp",
+    "account_open_type": 0,
+    "account_apply_date": "2024-01-15T00:00:00Z"
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print(response.json())
+```
+
+</CodeGroup>
+
+## Response
+
+<ResponseField name="code" type="number">
+  HTTP-style status code. `200` indicates the submission was accepted successfully.
+</ResponseField>
+
+<ResponseField name="msg" type="string">
+  A human-readable message accompanying the response, such as `"success"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The verification submission result.
+
+  <Expandable title="data fields">
+    <ResponseField name="verificationId" type="string">
+      A unique identifier assigned to this verification request (e.g., `"VRF20260729001"`). Save this value to poll for status updates using the [Check Verification Status](/api-reference/verification/status) endpoint.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The initial status of the verification request. This is always `"pending"` immediately after submission — the review process begins asynchronously.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "verificationId": "VRF20260729001",
+    "status": "pending"
+  }
+}
+```
+
+<Note>
+  Save the `verificationId` returned in the response. You will need it to check whether your verification has been approved or rejected by polling the [GET /api/v1/verification/status](/api-reference/verification/status) endpoint.
+</Note>
+
+<Warning>
+  Business verification requires that all submitted bank information — including account number, account holder name, and account opening date — exactly matches what is on file with the bank. Any mismatch will result in an automatic rejection. Double-check all details before submitting.
+</Warning>

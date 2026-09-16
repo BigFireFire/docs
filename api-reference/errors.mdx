@@ -1,0 +1,109 @@
+---
+title: "REST API Error Responses and Status Codes Reference"
+sidebarTitle: "Errors"
+description: "Reference for all Bocha API error codes, HTTP status codes, and the error response schema. Includes troubleshooting tips for common integration errors."
+---
+
+When something goes wrong, the Bocha API returns a structured error response that tells you exactly what happened and why. Rather than relying solely on HTTP status codes, every error carries an application-level `code` and a human-readable `msg` inside the standard response envelope — giving you precise, actionable information to handle failures gracefully in your integration.
+
+## Error Response Schema
+
+All error responses share the same envelope shape as successful responses, but with a non-200 `code` and a `null` `data` field:
+
+```json
+{
+  "code": 40001,
+  "msg": "商品库存不足",
+  "data": null
+}
+```
+
+<ResponseField name="code" type="number" required>
+  The application-level error code. This is the primary field you should branch on in your error-handling logic. A value of `200` always means success; anything else is an error. See the [Application error codes](#application-error-codes) table for the full list.
+</ResponseField>
+
+<ResponseField name="msg" type="string" required>
+  A human-readable description of the error. This message is intended for logging and debugging — it may be returned in Chinese or English depending on the error type. Do not use `msg` as a stable identifier in code; use `code` instead.
+</ResponseField>
+
+<ResponseField name="data" type="null" required>
+  Always `null` for error responses. When handling errors, do not attempt to read properties from this field.
+</ResponseField>
+
+<Note>
+  Always check the `code` field in the response body to determine whether a request succeeded — do not rely on the HTTP status code alone. The Bocha API may return an HTTP `200 OK` with a non-200 application `code` in the body to indicate a business-logic error. Your error-handling code should inspect `response.data.code` (or equivalent) on every response.
+</Note>
+
+## HTTP Status Codes
+
+The following HTTP status codes are used across the Bocha API. They provide a broad classification of the outcome; always read the body for the specific application code.
+
+| HTTP Status | Meaning             | When you'll see it                                                              |
+| ----------- | ------------------- | ------------------------------------------------------------------------------- |
+| `200`       | OK                  | The request was received. Check the body `code` to confirm application success. |
+| `400`       | Bad Request         | The request body or query parameters are malformed or missing required fields.  |
+| `401`       | Unauthorized        | No `Authorization` header was provided, or the API key is invalid or revoked.  |
+| `403`       | Forbidden           | The API key is valid but lacks permission to access the requested resource.     |
+| `404`       | Not Found           | The endpoint path does not exist. Check for typos in the URL.                  |
+| `429`       | Too Many Requests   | You have exceeded the rate limit for this endpoint. Back off and retry.         |
+| `500`       | Internal Server Error | An unexpected error occurred on Bocha's servers. Retry with exponential backoff. |
+
+## Application Error Codes
+
+These codes appear in the `code` field of the response body and provide precise detail beyond what HTTP status codes convey. Use these in your `switch` / `if` logic to handle each scenario appropriately.
+
+| `code` | Short Description      | What it means                                                       | How to resolve it                                                                                     |
+| ------ | ---------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `200`  | Success                | The request completed successfully.                                 | No action needed. Read the `data` field for the result.                                               |
+| `40001`| Insufficient Stock     | The product you are trying to order does not have enough inventory. | Reduce the `buyNum` value in your request or wait for stock to be replenished before retrying.        |
+| `40101`| Unauthorized           | The API key is missing, invalid, or has been revoked.               | Verify the `Authorization: Bearer YOUR_API_KEY` header is present and that the key is active.         |
+| `40301`| Verification Required  | The requested action requires the user to complete identity verification first. | Direct the user to complete identity verification via the [Verification API](/api-reference/verification/submit) before retrying. |
+| `50000`| Internal Server Error  | An unexpected error occurred on the Bocha platform.                 | Retry the request using exponential backoff. If the error persists after several attempts, contact [Bocha support](https://bocha.ai/support). |
+
+## Rate Limiting
+
+When you exceed the allowed request rate, the API returns HTTP `429`. The response will include a `Retry-After` header indicating how many seconds you should wait before sending another request.
+
+<Warning>
+  Continuing to send requests after receiving a `429` without honouring the `Retry-After` interval may result in your API key being temporarily suspended. Implement exponential backoff with jitter in any retry loop.
+</Warning>
+
+A minimal retry strategy looks like this:
+
+<CodeGroup>
+
+```python Python
+import time
+import requests
+
+def request_with_retry(url, headers, payload, max_retries=4):
+    delay = 1
+    for attempt in range(max_retries):
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 429:
+            retry_after = int(response.headers.get("Retry-After", delay))
+            time.sleep(retry_after)
+            delay *= 2  # exponential backoff
+            continue
+        return response.json()
+    raise Exception("Max retries exceeded")
+```
+
+```javascript JavaScript
+async function requestWithRetry(url, options, maxRetries = 4) {
+  let delay = 1000;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get("Retry-After") || delay / 1000, 10);
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
+      delay *= 2; // exponential backoff
+      continue;
+    }
+    return response.json();
+  }
+  throw new Error("Max retries exceeded");
+}
+```
+
+</CodeGroup>

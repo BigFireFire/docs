@@ -1,0 +1,183 @@
+---
+title: "Create and Manage Orders with the Bocha API"
+sidebarTitle: "Manage Orders"
+description: "Learn how to create orders, query order status, and interpret order responses using the Bocha order management API."
+---
+
+Every purchase on the Bocha platform flows through the order lifecycle: you create an order with a product and delivery address, Bocha reserves the inventory and calculates the total, and the resulting order number becomes your permanent reference for status checks and payment reconciliation. Understanding this lifecycle helps you build reliable integrations that stay in sync with order state from creation through fulfilment.
+
+## Creating an order
+
+Call `POST /api/v1/order/create` to place a new order. All three body fields are required — omitting any of them will return a validation error.
+
+### Request fields
+
+<ParamField body="goodsId" type="Long" required>
+  The unique identifier of the product you want to purchase. Obtain this from the product catalogue or your Bocha Dashboard.
+</ParamField>
+
+<ParamField body="buyNum" type="Integer" required>
+  The quantity to purchase. Must be `1` or greater. Fractional or zero values are rejected.
+</ParamField>
+
+<ParamField body="addressId" type="Long" required>
+  The identifier of the delivery address associated with your account. Manage addresses in the Dashboard under **Account → Addresses**.
+</ParamField>
+
+### Code examples
+
+<CodeGroup>
+
+```bash curl
+curl -X POST https://api.bocha.ai/api/v1/order/create \
+  -H "Authorization: Bearer $BOCHA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"goodsId": 50021, "buyNum": 2, "addressId": 8863}'
+```
+
+```python Python
+import os
+import requests
+
+response = requests.post(
+    "https://api.bocha.ai/api/v1/order/create",
+    headers={
+        "Authorization": f"Bearer {os.environ['BOCHA_API_KEY']}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "goodsId": 50021,
+        "buyNum": 2,
+        "addressId": 8863,
+    },
+)
+
+result = response.json()
+if result["code"] == 200:
+    order_no = result["data"]["orderNo"]
+    amount = result["data"]["orderAmount"]
+    print(f"Order created: {order_no} — ¥{amount}")
+else:
+    print(f"Error {result['code']}: {result['msg']}")
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.bocha.ai/api/v1/order/create", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${process.env.BOCHA_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    goodsId: 50021,
+    buyNum: 2,
+    addressId: 8863,
+  }),
+});
+
+const result = await response.json();
+
+if (result.code === 200) {
+  const { orderNo, orderAmount } = result.data;
+  console.log(`Order created: ${orderNo} — ¥${orderAmount}`);
+} else {
+  console.error(`Error ${result.code}: ${result.msg}`);
+}
+```
+
+</CodeGroup>
+
+### Successful response
+
+When the order is accepted, Bocha returns the new order number and the calculated total:
+
+```json
+{
+  "code": 200,
+  "msg": "下单成功",
+  "data": {
+    "orderNo": "ORD20260729001256",
+    "orderAmount": 199.80
+  }
+}
+```
+
+| Field         | Type    | Description                                              |
+|---------------|---------|----------------------------------------------------------|
+| `orderNo`     | String  | Unique order identifier. Store this for future queries.  |
+| `orderAmount` | Decimal | Total order value in CNY after quantity multiplication.  |
+
+<Tip>
+  Persist `orderNo` in your database immediately after a successful response. You will need it to query order status, initiate payment, and handle any post-purchase support requests.
+</Tip>
+
+---
+
+## Querying order status
+
+Use `GET /api/v1/order/query` to retrieve the current state of any order. Pass the order number as a query parameter:
+
+<CodeGroup>
+
+```bash curl
+curl -G https://api.bocha.ai/api/v1/order/query \
+  -H "Authorization: Bearer $BOCHA_API_KEY" \
+  --data-urlencode "orderNo=ORD20260729001256"
+```
+
+```python Python
+import os
+import requests
+
+response = requests.get(
+    "https://api.bocha.ai/api/v1/order/query",
+    headers={"Authorization": f"Bearer {os.environ['BOCHA_API_KEY']}"},
+    params={"orderNo": "ORD20260729001256"},
+)
+
+print(response.json())
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({ orderNo: "ORD20260729001256" });
+
+const response = await fetch(
+  `https://api.bocha.ai/api/v1/order/query?${params}`,
+  {
+    headers: {
+      "Authorization": `Bearer ${process.env.BOCHA_API_KEY}`,
+    },
+  }
+);
+
+const result = await response.json();
+console.log(result);
+```
+
+</CodeGroup>
+
+### Response fields
+
+| Field         | Type    | Description                                                                    |
+|---------------|---------|--------------------------------------------------------------------------------|
+| `orderNo`     | String  | The order identifier you queried.                                              |
+| `orderAmount` | Decimal | Total order value in CNY.                                                      |
+| `status`      | Integer | Current order state. See the status values in your Dashboard or API Reference. |
+
+---
+
+## Handling order errors
+
+When an order cannot be created or queried, the `code` field in the response indicates the specific reason. Handle these codes explicitly in your integration to surface clear feedback to your users.
+
+<Warning>
+  Always set `buyNum` to `1` or higher. Sending `0` or a negative value will result in a validation error and the order will not be created.
+</Warning>
+
+| Error Code | Meaning                   | Recommended action                                                      |
+|------------|---------------------------|-------------------------------------------------------------------------|
+| `40001`    | Insufficient stock        | Notify the user and suggest checking back later or choosing an alternative product. |
+| `40002`    | Invalid delivery address  | Prompt the user to verify or update the address linked to `addressId`.  |
+| `40003`    | Invalid product ID        | Confirm `goodsId` is correct and that the product is still available.   |
+| `40004`    | Quantity below minimum    | Ensure `buyNum` meets the product's minimum order quantity.             |
+| `40100`    | Authentication failure    | Check that your API key is valid and correctly set in the `Authorization` header. |

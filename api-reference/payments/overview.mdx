@@ -1,0 +1,79 @@
+---
+title: "Bocha Payments API: Methods and Payment Records"
+sidebarTitle: "Overview"
+description: "Reference for the Bocha Payments API. Learn supported pay_type values, how to retrieve payment records, and what each payment field means."
+---
+
+The Bocha Payments API provides a unified interface for working with all payment activity on your account. Whether your customers pay via WeChat Pay, Alipay, bank sub-account transfer, or a redeemable voucher code, every transaction flows through the same record structure. This reference documents the supported payment methods, how to query your payment history, and how to interpret each field in a payment record.
+
+## pay_type Values
+
+Every payment record includes a `pay_type` field that identifies which payment method was used. The table below lists all supported values.
+
+| Value | Method | Notes |
+|---|---|---|
+| `0` | WeChat Pay | Standard WeChat in-app or QR payment |
+| `1` | Alipay | Standard Alipay in-app or QR payment |
+| `2` | UnionPay | Card-based UnionPay transaction |
+| `3` | Redemption Code | Voucher-based; no monetary transfer |
+| `4` | Bank Sub-Account | `order_flow_no` is populated for this type only |
+| `-1` | Manual | Processed directly by a Bocha administrator |
+
+<Note>
+  `order_flow_no` is only populated when `pay_type = 4` (Bank Sub-Account). For all other payment methods this field is `null`.
+</Note>
+
+## GET /api/v1/payment/record
+
+Retrieve a list of payment records associated with your account. Records are returned in reverse chronological order and cover all payment methods.
+
+**`GET`** `https://api.bocha.ai/api/v1/payment/record`
+
+### Example Request
+
+```bash cURL
+curl --request GET \
+  --url https://api.bocha.ai/api/v1/payment/record \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+### Response Fields
+
+<ResponseField name="pay_money" type="number">
+  The monetary amount of the payment in CNY. For redemption code payments (`pay_type = 3`) this reflects the face value of the voucher applied.
+</ResponseField>
+
+<ResponseField name="pay_type" type="number">
+  Integer code identifying the payment method used. See the [pay_type values](#pay_type-values) table above for the full list.
+</ResponseField>
+
+<ResponseField name="order_code" type="string">
+  The Bocha order number (`orderNo`) that this payment is associated with. Use this to correlate payment records with orders returned by the Order Query endpoint.
+</ResponseField>
+
+<ResponseField name="order_flow_no" type="string">
+  Unique bank-side transaction identifier, up to 36 characters. This field is only populated when `pay_type = 4` (Bank Sub-Account); it is `null` for all other payment methods. Use this value to reconcile payments with your bank statement.
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": [
+    {
+      "pay_money": 199.80,
+      "pay_type": 4,
+      "order_code": "ORD20260729001256",
+      "order_flow_no": "FLOW-2026-07-29-A3F9C1D2E5B84720"
+    },
+    {
+      "pay_money": 49.00,
+      "pay_type": 1,
+      "order_code": "ORD20260728000847",
+      "order_flow_no": null
+    }
+  ]
+}
+```

@@ -1,0 +1,71 @@
+---
+title: "How Bocha Works: Platform Concepts Overview"
+sidebarTitle: "Overview"
+description: "Understand Bocha's core platform concepts: the open API structure, resource hierarchy, request/response format, and how services fit together."
+---
+
+Bocha is an AI-powered search and open API platform built around a single, consistent REST interface. Every capability — from search to payments to identity verification — is exposed through the same base URL (`https://api.bocha.ai`), authenticated with a Bearer token, and returns responses in a predictable JSON envelope. Understanding this shared architecture makes it faster to integrate any part of the platform, because the patterns you learn in one area carry directly to the next.
+
+## API design
+
+Bocha's API follows REST conventions. You send JSON-encoded request bodies over HTTPS and receive JSON responses. Every response, regardless of the endpoint, wraps its payload in a three-field envelope:
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": { ... }
+}
+```
+
+- **`code`** — A numeric status code. `200` indicates success; other values signal errors you should handle explicitly.
+- **`msg`** — A human-readable description of the result, useful for logging and debugging.
+- **`data`** — The resource payload for the request. Its shape varies by endpoint, but it is always nested under this key.
+
+Always check `code` before processing `data`. A successful HTTP `200` response from the server does not guarantee the operation succeeded at the application level.
+
+<Note>
+  All timestamps across the Bocha API are expressed in ISO 8601 format (e.g., `2024-06-15T08:30:00Z`). Parse and store them with timezone awareness to avoid offset-related bugs.
+</Note>
+
+## Key resources
+
+Bocha organises its API surface into four primary resource types. Each has its own set of endpoints, but all share the common envelope format and authentication model described above.
+
+<CardGroup cols={2}>
+  <Card title="Orders" icon="cart-shopping">
+    Represent a purchase intent. You create an order by specifying a goods ID, quantity, and delivery address. The platform returns an order number and the calculated amount due.
+  </Card>
+  <Card title="Payments" icon="credit-card">
+    Record the settlement of an order. Payments carry a `pay_type` that identifies the method used — WeChat Pay, Alipay, UnionPay, redemption code, bank sub-account, or manual admin processing.
+  </Card>
+  <Card title="Verification" icon="shield-check">
+    Capture identity checks for individual users and businesses. Verification is a prerequisite for certain payment methods and unlocks higher platform limits.
+  </Card>
+  <Card title="Users" icon="user">
+    Represent authenticated principals on the platform. Users own API keys, may hold sub-accounts, and accumulate orders and verification records over time.
+  </Card>
+</CardGroup>
+
+## Request lifecycle
+
+Follow these steps every time you interact with the Bocha API to ensure requests are correctly formed and errors are handled gracefully.
+
+<Steps>
+  <Step title="Authenticate">
+    Include your API key as a Bearer token in the `Authorization` header of every request:
+    ```http
+    Authorization: Bearer <your-api-key>
+    ```
+    Requests without a valid token are rejected with a `401` response before any business logic runs.
+  </Step>
+  <Step title="Send the request">
+    Target the appropriate endpoint under `https://api.bocha.ai`, set `Content-Type: application/json`, and include a JSON body where the endpoint requires one. Use HTTPS exclusively — plain HTTP connections are not accepted.
+  </Step>
+  <Step title="Receive the response">
+    Deserialise the JSON envelope and read the `code` field first. A value of `200` means the operation succeeded and `data` contains the result. Any other value means the operation failed, and `msg` will describe why.
+  </Step>
+  <Step title="Handle errors">
+    Map non-`200` codes to your application's error-handling logic. Log the full response envelope — including `msg` — to aid debugging. For transient failures (network timeouts, `5xx` codes), implement exponential back-off before retrying.
+  </Step>
+</Steps>

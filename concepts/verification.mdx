@@ -1,0 +1,65 @@
+---
+title: "User Identity Verification on Bocha"
+sidebarTitle: "Verification"
+description: "Learn how Bocha's identity verification works for individuals and businesses, what information is required, and how verification status is tracked."
+---
+
+Bocha requires identity verification before you can access certain platform features, most notably bank sub-account payments. Verification establishes that the account holder is who they claim to be and that the bank account linked to the account is legitimately owned by the same individual or organisation. Completing verification promptly removes friction from your integration and ensures your account is ready when you need higher-value payment flows.
+
+<Warning>
+  Identity verification is a hard prerequisite for bank sub-account payments (`pay_type = 4`). Attempting to initiate a sub-account payment before verification is approved will result in a rejected request. Complete verification before building or testing sub-account payment flows.
+</Warning>
+
+## Verification types
+
+Bocha offers two verification pathways depending on whether the account is personal or business. Submit the pathway that matches your account type.
+
+<Tabs>
+  <Tab title="Individual verification">
+    Individual verification confirms the identity of a natural person. You provide personal bank account details and the platform cross-references them against banking records to confirm ownership.
+
+    Set `account_open_type` to `1` when submitting a personal verification request. The `account_name` field must match the name on file with your bank exactly — including spacing and capitalisation — otherwise the check will fail.
+  </Tab>
+  <Tab title="Business verification">
+    Business verification confirms the identity of a registered organisation. You provide the company's bank account details, and Bocha verifies that the account belongs to the legal entity associated with your Bocha account.
+
+    Set `account_open_type` to `0` for business verification. The `account_name` field should contain the full registered company name as it appears on the bank account. Business verification unlocks the bank sub-account payment method and higher platform usage limits.
+  </Tab>
+</Tabs>
+
+## Required information
+
+Regardless of verification type, you submit the following fields. Ensure every field is accurate before submitting — errors require you to restart the verification process.
+
+| Field | Type | Description |
+|---|---|---|
+| `account_no` | string | The bank account number to verify. Must be the full account number with no spaces or separators. |
+| `account_name` | string | The name of the account holder as registered with the bank. For business accounts, use the full legal entity name. |
+| `account_open_type` | integer | Identifies whether the account belongs to a business or an individual. `0` = Business, `1` = Personal. |
+| `account_apply_date` | datetime | The date the bank account was opened, in ISO 8601 format. This is used as an additional verification signal by the banking network. |
+
+## Verification states
+
+After you submit a verification request, the record moves through a defined set of states. Poll the verification status endpoint to track progress and respond appropriately in your integration.
+
+<Accordion title="Pending">
+  The verification request has been received and is being processed. This state is normal immediately after submission and may persist for several minutes to a few hours depending on banking network response times.
+
+  **Recommended action:** Wait and poll the status endpoint at a reasonable interval (see the tip below). Do not resubmit the same request while it is still pending — duplicate submissions may cause the review to fail.
+</Accordion>
+
+<Accordion title="Approved">
+  Verification succeeded. The bank account details were confirmed and your account has been granted the capabilities that require verification, including bank sub-account payments (`pay_type = 4`).
+
+  **Recommended action:** Proceed with building your integration. No further action is required unless you need to update your bank account details in future.
+</Accordion>
+
+<Accordion title="Rejected">
+  Verification failed. The bank account details could not be confirmed. Common causes include a mismatch between `account_name` and the bank's records, an incorrect `account_no`, or an invalid `account_apply_date`.
+
+  **Recommended action:** Review the `msg` field in the API response for a specific reason. Correct the information and resubmit a new verification request. Do not reuse the rejected record ID.
+</Accordion>
+
+<Tip>
+  Use the verification status API to poll for completion rather than relying on fixed wait times. A polling interval of 30 seconds is a reasonable default. Stop polling as soon as the state transitions to either `approved` or `rejected` — both are terminal states that require no further polling.
+</Tip>

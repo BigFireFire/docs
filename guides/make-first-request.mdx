@@ -1,0 +1,141 @@
+---
+title: "Make Your First Bocha API Request"
+sidebarTitle: "First Request"
+description: "Walk through setting up your environment, authenticating, and calling the Bocha API for the first time with a working code example."
+---
+
+The Bocha API gives you programmatic access to AI-powered search, order management, and payment services through a single, consistent REST interface. This guide walks you through everything you need to send your first authenticated request — from exporting your API key to reading the structured response your application will receive.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A Bocha account with an active subscription
+- A valid API key — see [Authentication](/authentication) for how to create and manage your keys
+- A terminal or code editor ready to run the examples below
+
+## Getting started
+
+<Steps>
+
+  <Step title="Set your API key">
+    Store your API key as an environment variable so you never hard-code credentials in your source files. Open a terminal and run:
+
+    ```bash
+    export BOCHA_API_KEY=your_key_here
+    ```
+
+    For persistent access across sessions, add this line to your shell profile (`~/.bashrc`, `~/.zshrc`, or equivalent). Your key is now available to all the examples below as `$BOCHA_API_KEY`.
+  </Step>
+
+  <Step title="Choose an endpoint">
+    Every Bocha API call follows the same base URL:
+
+    ```
+    https://api.bocha.ai
+    ```
+
+    For this walkthrough, you'll call `POST /api/v1/order/create` — a representative endpoint that exercises authentication, a request body, and a structured response. The same patterns apply to every other endpoint in the API.
+  </Step>
+
+  <Step title="Send the request">
+    Pass your API key in the `Authorization` header as a Bearer token, set `Content-Type` to `application/json`, and include the required order fields in the request body.
+
+    <CodeGroup>
+
+    ```bash curl
+    curl -X POST https://api.bocha.ai/api/v1/order/create \
+      -H "Authorization: Bearer $BOCHA_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"goodsId": 50021, "buyNum": 1, "addressId": 8863}'
+    ```
+
+    ```python Python
+    import os
+    import requests
+
+    api_key = os.environ["BOCHA_API_KEY"]
+
+    response = requests.post(
+        "https://api.bocha.ai/api/v1/order/create",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "goodsId": 50021,
+            "buyNum": 1,
+            "addressId": 8863,
+        },
+    )
+
+    print(response.json())
+    ```
+
+    ```javascript JavaScript
+    const response = await fetch("https://api.bocha.ai/api/v1/order/create", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.BOCHA_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        goodsId: 50021,
+        buyNum: 1,
+        addressId: 8863,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Read the response">
+    Every Bocha API response follows the same three-field envelope regardless of the endpoint:
+
+    ```json
+    {
+      "code": 200,
+      "msg": "下单成功",
+      "data": {
+        "orderNo": "ORD20260729001256",
+        "orderAmount": 199.80
+      }
+    }
+    ```
+
+    | Field  | Type   | Description                                                                 |
+    |--------|--------|-----------------------------------------------------------------------------|
+    | `code` | Integer | Status code. `200` indicates success; any other value indicates an error.  |
+    | `msg`  | String  | Human-readable message describing the outcome.                              |
+    | `data` | Object  | The payload for this specific endpoint. `null` on error responses.          |
+
+    Check `code` first in your application logic before accessing fields inside `data`.
+  </Step>
+
+  <Step title="Handle errors">
+    When something goes wrong, the envelope structure stays the same — only `code` changes and `data` is `null`:
+
+    ```json
+    {
+      "code": 40001,
+      "msg": "商品库存不足",
+      "data": null
+    }
+    ```
+
+    Your error-handling logic should branch on `code`, surface `msg` for logging, and treat any non-`200` code as a failure state. For a full list of error codes and recommended recovery actions, see the [Error Codes reference](/support/error-codes).
+  </Step>
+
+</Steps>
+
+<Note>
+  Bocha enforces rate limits on all API endpoints. If you exceed your plan's request quota, you will receive a `429` HTTP status code. Build exponential backoff into your retry logic to handle bursts gracefully.
+</Note>
+
+<Tip>
+  Once you're comfortable with the request/response cycle, explore the full [API Reference](/api-reference) to discover all available endpoints, their parameters, and detailed response schemas.
+</Tip>

@@ -1,0 +1,91 @@
+---
+title: "GET /api/v1/verification/status — Check Verification Status"
+sidebarTitle: "Status"
+description: "GET /api/v1/verification/status — Check the status of a submitted identity verification. Returns pending, approved, or rejected with a timestamp."
+---
+
+After submitting your verification request, use this endpoint to check whether it has been approved, is still under review, or has been rejected. You can pass the `verificationId` returned from the submit endpoint to query a specific request, or omit it to retrieve the status of your most recent verification associated with your API key. Poll this endpoint periodically until the status moves out of `pending`.
+
+**`GET /api/v1/verification/status`**
+
+## Request
+
+<ParamField query="verificationId" type="string">
+  The verification ID returned from the [Submit Verification](/api-reference/verification/submit) endpoint (e.g., `"VRF20260729001"`). If omitted, the API returns the status for the authenticated user's most recent verification request.
+</ParamField>
+
+### Example Request
+
+```bash cURL
+curl --request GET \
+  --url 'https://api.bocha.ai/api/v1/verification/status?verificationId=VRF20260729001' \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+## Response
+
+<ResponseField name="code" type="number">
+  HTTP-style status code. `200` indicates the request was processed successfully, regardless of the verification outcome.
+</ResponseField>
+
+<ResponseField name="msg" type="string">
+  A human-readable message accompanying the response, such as `"success"`.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The current state of the verification request.
+
+  <Expandable title="data fields">
+    <ResponseField name="status" type="string">
+      The current verification status. One of: `"pending"`, `"approved"`, or `"rejected"`. See the [Status Meanings](#status-meanings) table below for guidance on each state.
+    </ResponseField>
+
+    <ResponseField name="verifiedAt" type="string">
+      An ISO 8601 timestamp indicating when the verification was approved (e.g., `"2026-07-29T10:00:00Z"`). This field is `null` if the verification has not yet been approved.
+    </ResponseField>
+
+    <ResponseField name="rejectionReason" type="string">
+      A human-readable explanation of why the verification was rejected. This field is `null` if the verification has not been rejected.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Response — Approved
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "status": "approved",
+    "verifiedAt": "2026-07-29T10:00:00Z",
+    "rejectionReason": null
+  }
+}
+```
+
+### Example Response — Rejected
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "status": "rejected",
+    "verifiedAt": null,
+    "rejectionReason": "Bank account information mismatch"
+  }
+}
+```
+
+## Status Meanings
+
+| Status | Meaning | Next Step |
+|---|---|---|
+| `pending` | Your verification is currently under review by the Bocha platform. | Wait and poll this endpoint again. |
+| `approved` | Verification is complete and your identity or business has been confirmed. | You can now use bank sub-account payments. |
+| `rejected` | Verification failed and could not be approved. | Check the `rejectionReason` field and resubmit via the [Submit Verification](/api-reference/verification/submit) endpoint with corrected information. |
+
+<Tip>
+  While your verification is in the `pending` state, poll this endpoint every 30–60 seconds to detect status changes promptly. Avoid polling more frequently than every 30 seconds to stay within rate limits.
+</Tip>

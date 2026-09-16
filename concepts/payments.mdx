@@ -1,0 +1,54 @@
+---
+title: "Bocha Payment Methods and Payment Lifecycle"
+sidebarTitle: "Payments"
+description: "Explore the payment methods Bocha supports, how payment records work, and the meaning of pay_type values in API responses."
+---
+
+Bocha's payment system is designed to accommodate a wide range of settlement preferences — from mainstream mobile wallets to bank sub-account flows and voucher-based redemptions. Every payment is recorded as a structured object linked to an order, giving you a complete audit trail from purchase intent to settlement. Understanding the `pay_type` field and the lifecycle of a payment record will help you build reliable integrations and handle edge cases correctly.
+
+## Supported payment methods
+
+The `pay_type` field on every payment record identifies which method was used to settle the order. The table below describes all supported values.
+
+| `pay_type` | Method | Notes |
+|---|---|---|
+| `0` | WeChat Pay | Mobile wallet payment via WeChat. Requires the payer to complete authorisation in the WeChat app or mini-program. |
+| `1` | Alipay | Mobile wallet payment via Alipay. Supports both app-based and web-based authorisation flows. |
+| `2` | UnionPay | Card-based payment through the UnionPay network, supporting both debit and credit instruments. |
+| `3` | Redemption Code | Voucher-based payment. The user supplies a valid redemption code at checkout to cover the order amount fully or partially. |
+| `4` | Bank Sub-Account | Payment initiated from a registered bank sub-account. Every transaction of this type is assigned a unique `order_flow_no` for reconciliation. |
+| `-1` | Manual (Admin) | Payment processed directly by Bocha support staff outside the automated payment flow, typically used for corrections or enterprise billing adjustments. |
+
+## Payment record fields
+
+When you retrieve a payment record from the API, the `data` object contains the following key fields.
+
+| Field | Type | Description |
+|---|---|---|
+| `pay_money` | number | The amount settled in this payment, expressed in the account's currency unit. |
+| `pay_type` | integer | Identifies the payment method used. See the table above for all valid values. |
+| `order_code` | string | The order number this payment is associated with. Matches the `orderNo` returned when the order was created. |
+| `order_flow_no` | string | The bank transaction flow number assigned by the financial institution. **Only populated when `pay_type = 4`.** |
+
+<Note>
+  `order_flow_no` is only present on payment records where `pay_type = 4` (bank sub-account). For all other payment methods, this field is either absent or `null`. Do not rely on it for reconciliation unless you are specifically processing sub-account payments.
+</Note>
+
+## Redemption codes
+
+Redemption codes let users pay for orders using pre-issued vouchers. To apply a redemption code during checkout, include the code in your order creation request alongside the standard fields (`goodsId`, `buyNum`, `addressId`). The platform validates the code, deducts its value from the order total, and records the payment with `pay_type = 3`.
+
+<Accordion title="How redemption code validation works">
+  When you submit a redemption code, Bocha checks the following before accepting the payment:
+
+  1. **Existence** — The code must exist in the platform's voucher registry.
+  2. **Validity period** — The code must not be expired at the time of submission.
+  3. **Usage limit** — Single-use codes are invalidated immediately after their first successful redemption; multi-use codes decrement their remaining count.
+  4. **Denomination match** — If the code covers only a partial amount, the remaining balance must be settled through another payment method in the same transaction.
+
+  If validation fails for any reason, the API returns a non-`200` code with a descriptive `msg`. Correct the issue and resubmit — partial applications are not retained between attempts.
+</Accordion>
+
+<Tip>
+  When building a checkout flow, always display the post-redemption order amount returned in the API response before asking the user to confirm. This ensures the user sees the correct amount due after any code has been applied.
+</Tip>

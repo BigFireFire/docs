@@ -1,30 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
+  "projectType": "saas",
+  "projectName": "Bocha",
+  "projectDescription": "Bocha is a SaaS platform providing AI-powered search and open API services with integrated payment, user verification, and order management.",
   "theme": "luma",
-  "name": "Bocha",
-  "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
-  },
-  "favicon": "/favicon.svg",
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:support@bocha.ai"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "/quickstart"
-    }
-  },
+  "primaryColor": "#ef7025",
+  "lightColor": "#eec9bc",
+  "darkColor": "#4fa1ab",
   "navigation": {
     "tabs": [
       {
@@ -101,7 +82,21 @@
       }
     ]
   },
-  "footer": {
-    "socials": {}
-  }
+  "keyFeatures": [
+    "AI-powered search API",
+    "Open API platform for developers",
+    "Multi-channel payment support (WeChat, Alipay, UnionPay, voucher codes, bank sub-accounts)",
+    "User identity verification",
+    "Order management and tracking",
+    "Sub-account payment flows",
+    "Redemption code support"
+  ],
+  "publicApiSurface": [
+    "POST /api/v1/order/create",
+    "GET /api/v1/order/query",
+    "POST /api/v1/verification/submit",
+    "GET /api/v1/verification/status",
+    "POST /api/v1/payment/sub-account",
+    "GET /api/v1/payment/record"
+  ]
 }

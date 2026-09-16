@@ -1,0 +1,150 @@
+---
+title: "Frequently Asked Questions about Bocha"
+sidebarTitle: "FAQ"
+description: "Find answers to the most common questions about Bocha accounts, API keys, payments, verification, and orders in this FAQ guide."
+---
+
+Whether you're just getting started or running into a specific issue, this FAQ covers the most common questions about using the Bocha platform — from obtaining your API key and completing identity verification to understanding payment methods and resolving order errors. Browse the topics below to find the answer you need, or reach out to our support team if your question isn't covered here.
+
+<Accordion title="How do I get an API key?">
+  Your API key is generated from the Bocha dashboard. Once you have an account, navigate to **Settings → API Keys** and click **Create New Key**. Give the key a descriptive name (for example, `production-app` or `dev-testing`), then copy the secret immediately — it will not be shown again after you leave the page.
+
+  Store your API key securely. Include it in every request as a Bearer token in the `Authorization` header:
+
+  ```http
+  Authorization: Bearer YOUR_API_KEY
+  ```
+
+  You can create multiple keys for different environments or applications and revoke any key at any time from the same **API Keys** settings page.
+</Accordion>
+
+<Accordion title="What payment methods does Bocha support?">
+  Bocha supports the following payment methods across its platform:
+
+  | Pay Type Code | Method |
+  |---|---|
+  | `0` | WeChat Pay |
+  | `1` | Alipay |
+  | `2` | UnionPay |
+  | `3` | Redemption Code |
+  | `4` | Bank Sub-Account |
+  | `-1` | Manual (offline payment processed by Bocha staff) |
+
+  When submitting a payment or order via the API, pass the appropriate integer value in the `pay_type` field. Not all payment methods may be available for every product or account type — check your account dashboard for the methods enabled on your account.
+</Accordion>
+
+<Accordion title="Why is my API request returning a 401 error?">
+  A `401 Unauthorized` error means Bocha could not authenticate your request. The most common causes are:
+
+  - **Missing Authorization header** — every request to `https://api.bocha.ai` must include the header `Authorization: Bearer YOUR_API_KEY`.
+  - **Invalid or malformed key** — double-check that you copied the full key without extra spaces or line breaks.
+  - **Expired or revoked key** — if you or a team member recently deleted the key in the dashboard, you'll need to generate a new one under **Settings → API Keys**.
+  - **Wrong environment** — make sure the key belongs to the environment (production vs. sandbox) you're targeting.
+
+  To resolve the error, regenerate a fresh API key, update your application's configuration with the new value, and retry your request.
+</Accordion>
+
+<Accordion title="How do I complete identity verification?">
+  Identity verification (KYC) is required before you can access certain Bocha API features, including bank sub-account payments. To complete verification:
+
+  1. Log in to the Bocha dashboard and go to **Account → Verification**.
+  2. Select your account type: **Business (0)** or **Personal (1)** — this maps to the `account_open_type` field.
+  3. Enter your **Account Number** (`account_no`) — for businesses this is the unified social credit code; for individuals this is the national ID number.
+  4. Enter your **Account Name** (`account_name`) — the legal name of the business or individual exactly as it appears on official documents.
+  5. Upload any required supporting documents when prompted.
+  6. Submit the form and wait for the review process to complete.
+
+  <Note>
+    Make sure the name and account number match your official records exactly. Mismatches are the most common reason for verification rejection.
+  </Note>
+</Accordion>
+
+<Accordion title="What is a bank sub-account?">
+  A bank sub-account (`pay_type=4`) is a dedicated virtual account provisioned under Bocha's banking partner on your behalf. It allows enterprise customers to make payments and settle transactions directly through a segregated bank account tied to their Bocha identity, which simplifies reconciliation and provides a clear audit trail.
+
+  To use a bank sub-account you must first complete identity verification. Once verified, Bocha provisions the sub-account automatically. You can reference it in orders by setting `pay_type` to `4`. Transactions through a bank sub-account generate an `order_flow_no` that you can use to track the underlying bank transfer.
+</Accordion>
+
+<Accordion title="How do I apply a redemption code?">
+  A redemption code is a prepaid voucher that credits your Bocha account balance or fulfills a specific order. To apply one:
+
+  1. When placing an order via the API, set `pay_type` to `3` in your request body.
+  2. Include the redemption code value in the designated field (for example, `redeem_code`).
+  3. Submit the order — Bocha validates the code and applies the credit automatically.
+
+  Alternatively, you can redeem codes directly from the dashboard under **Billing → Redeem Code** without making an API call. Redemption codes are single-use; once applied they cannot be transferred or refunded.
+
+  <Tip>
+    Keep redemption codes private. Anyone who obtains your code can apply it to their own account before you do.
+  </Tip>
+</Accordion>
+
+<Accordion title="What does `order_flow_no` mean?">
+  `order_flow_no` is a unique transaction reference number generated by the banking system when a payment is processed through a bank sub-account (`pay_type=4`). It represents the underlying bank transfer that funds a given order and is distinct from Bocha's own order number (`orderNo`).
+
+  You can use `order_flow_no` to:
+
+  - **Reconcile payments** — match Bocha orders against your bank statements by comparing the flow number.
+  - **Dispute resolution** — provide this number to your bank or Bocha support when investigating a payment discrepancy.
+  - **Audit trails** — store it alongside `orderNo` in your internal systems for a complete transaction record.
+
+  The `order_flow_no` is returned in the order response payload for any order paid via bank sub-account.
+</Accordion>
+
+<Accordion title="How do I query the status of an order?">
+  Use the **GET /api/v1/order/query** endpoint to retrieve the current status of any order:
+
+  ```http
+  GET https://api.bocha.ai/api/v1/order/query?orderNo=YOUR_ORDER_NO
+  Authorization: Bearer YOUR_API_KEY
+  ```
+
+  Replace `YOUR_ORDER_NO` with the order number returned when you created the order. The response includes the current order status, payment status, and any associated `order_flow_no` for sub-account payments.
+
+  Common status values you may see in the response:
+
+  - **pending** — order received, awaiting payment confirmation.
+  - **processing** — payment confirmed, order is being fulfilled.
+  - **completed** — order fulfilled successfully.
+  - **failed** — order could not be completed; check the `msg` field for the reason.
+
+  Poll this endpoint with a reasonable interval (for example, every 5–10 seconds) until the order reaches a terminal state (`completed` or `failed`).
+</Accordion>
+
+<Accordion title="What should I do if my order fails due to insufficient stock?">
+  If you receive error code `40001` with the message `商品库存不足` (Insufficient stock), the product you requested does not have enough inventory to fulfill your order at the requested quantity.
+
+  To resolve this:
+
+  1. **Reduce `buyNum`** — lower the quantity in your order request to match available stock.
+  2. **Check availability first** — query the product catalog or details endpoint before placing large orders to confirm current stock levels.
+  3. **Choose an alternative product** — if the item is consistently out of stock, consider selecting a comparable product with sufficient inventory.
+  4. **Retry later** — stock levels are replenished periodically; you may be able to place the same order after a short wait.
+
+  <Warning>
+    Do not retry the identical request in a tight loop — inventory will not change between rapid successive calls and you risk hitting rate limits.
+  </Warning>
+</Accordion>
+
+<Accordion title="How long does identity verification take?">
+  Verification is typically reviewed within **1–3 business days** after you submit all required information. In many cases, automated checks complete the review within a few hours during business hours.
+
+  To check your current verification status:
+
+  1. Log in to the Bocha dashboard and navigate to **Account → Verification**.
+  2. The status banner will show one of: **Pending Review**, **Verified**, or **Rejected**.
+  3. If your verification was rejected, the page will display the reason — correct the identified issue and resubmit.
+
+  If your status has not updated after 3 business days, contact Bocha support and include your account email and the date you submitted the verification request.
+</Accordion>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Error Codes" icon="circle-exclamation" href="/support/error-codes">
+    Look up every Bocha API error code, its meaning, and the recommended action to resolve it.
+  </Card>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Learn how to authenticate your API requests using Bearer tokens and manage your API keys.
+  </Card>
+</CardGroup>

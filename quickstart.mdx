@@ -1,47 +1,79 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Bocha in 5 Minutes"
+sidebarTitle: "Quickstart"
+description: "Create your Bocha account, generate an API key, and make your first API call in under 5 minutes with this step-by-step guide."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+This guide walks you through everything you need to make your first successful request to the Bocha API. By the end, you'll have a working API key, a verified authenticated request, and a clear picture of how Bocha's response format is structured — all in under five minutes.
 
 ## Prerequisites
 
-Before you begin, you must have:
+Before you begin, make sure you have the following:
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+- A Bocha account (you'll create one in Step 1 if you don't have one yet)
+- Basic familiarity with REST APIs and HTTP requests
+- A terminal or API client such as [curl](https://curl.se/), [Postman](https://www.postman.com/), or [Insomnia](https://insomnia.rest/)
 
-## Get started
+## Steps
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
-
-    ```bash
-    npm install your-package
-    ```
+  <Step title="Create an account">
+    Go to [app.bocha.ai](https://app.bocha.ai) and click **Sign Up**. Enter your email address and create a password. After confirming your email, you'll land on the Bocha dashboard — your central hub for managing API keys, orders, and settings.
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+  <Step title="Generate an API key">
+    From the dashboard, navigate to **Settings → API Keys** and click **Create New Key**. Give your key a descriptive name (for example, `my-first-key` or `dev-environment`) so you can identify it later. Copy the key immediately — for security reasons, Bocha only displays the full key value once.
 
-    ```bash
-    your-cli init
-    ```
+    <Warning>
+      Store your API key somewhere safe, such as a password manager or a secrets manager. Never commit it to source control or expose it in client-side code.
+    </Warning>
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Make your first request">
+    With your API key in hand, run the following command in your terminal. Replace `YOUR_API_KEY` with the key you just generated.
 
     ```bash
-    your-cli start
+    curl -X POST https://api.bocha.ai/api/v1/order/create \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"goodsId": 50021, "buyNum": 1, "addressId": 8863}'
     ```
+
+    This request creates a new order using the Bocha Order API. The `Authorization` header carries your API key as a Bearer token — this is the same pattern used across every Bocha endpoint.
+  </Step>
+  <Step title="Verify the response">
+    A successful request returns an HTTP `200` status and a JSON body in the following format:
+
+    ```json
+    {
+      "code": 200,
+      "msg": "success",
+      "data": {
+        "orderId": "ORD-20240501-00123",
+        "status": "created",
+        "goodsId": 50021,
+        "buyNum": 1,
+        "addressId": 8863,
+        "createdAt": "2024-05-01T10:32:00Z"
+      }
+    }
+    ```
+
+    Every Bocha API response follows this structure: a `code` field with the status code, a `msg` field with a human-readable status message, and a `data` object containing the resource returned by the endpoint. If something goes wrong, `code` will reflect the relevant error code and `msg` will describe the problem.
   </Step>
 </Steps>
 
 <Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
-
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+  Never hardcode your API key directly in your source code. Instead, load it from an environment variable such as `BOCHA_API_KEY`. This keeps your credentials out of version control and makes it easy to rotate keys without code changes.
 </Tip>
+
+## What's next?
+
+Now that you've made your first successful API call, explore the rest of the Bocha platform.
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Understand the full authentication model, including error codes and best practices for managing API keys securely.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Browse all available endpoints across search, payments, identity verification, and order management.
+  </Card>
+</CardGroup>

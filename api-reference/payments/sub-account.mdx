@@ -1,0 +1,86 @@
+---
+title: "POST /api/v1/payment/sub-account — Bank Sub-Account Payment"
+sidebarTitle: "Sub-Account"
+description: "POST /api/v1/payment/sub-account — Initiate a bank sub-account payment. Requires verified business account. Returns order_flow_no for transaction tracking."
+---
+
+The Bank Sub-Account Payment endpoint allows your business to settle orders via a dedicated bank sub-account transfer. This payment method is designed for enterprises that require bank-reconcilable transaction records: each successful call returns an `order_flow_no` that uniquely identifies the transfer on the banking side, making it straightforward to match payments against your own ledger or accounting system.
+
+**`POST`** `https://api.bocha.ai/api/v1/payment/sub-account`
+
+<Warning>
+  This endpoint requires **completed business identity verification** on your Bocha account. Calling it before verification is approved will return error code `40301`. Contact Bocha support to begin the verification process.
+</Warning>
+
+## Prerequisites
+
+Before calling this endpoint, ensure the following conditions are met:
+
+- Your Bocha account has passed business identity verification.
+- The target order exists and is in `PENDING` (awaiting payment) status.
+- The `amount` you supply matches the `orderAmount` returned when the order was created.
+
+## Request
+
+<ParamField body="orderNo" type="string" required>
+  The unique order number of the order you want to pay for. This is the `orderNo` value returned by the Create Order endpoint.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  The payment amount in CNY. This must match the `orderAmount` of the specified order. Mismatched amounts will result in a validation error.
+</ParamField>
+
+### Example Request
+
+```bash cURL
+curl --request POST \
+  --url https://api.bocha.ai/api/v1/payment/sub-account \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "orderNo": "ORD20260729001256",
+    "amount": 199.80
+  }'
+```
+
+## Response
+
+<ResponseField name="code" type="number">
+  HTTP-style status code. `200` indicates the payment was initiated successfully.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Contains the transaction tracking details on success, or `null` on error.
+
+  <Expandable title="data fields">
+    <ResponseField name="order_flow_no" type="string">
+      A unique bank-side transaction identifier, up to 36 characters (varchar 36). Bocha generates this value at the time of payment initiation. Store it immediately — you will need it to reconcile this payment in your bank records and to look up the transaction via the Payment Records endpoint.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Success Response
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "order_flow_no": "FLOW-2026-07-29-A3F9C1D2E5B84720"
+  }
+}
+```
+
+### Error Response — Verification Required
+
+```json
+{
+  "code": 40301,
+  "msg": "业务身份未验证",
+  "data": null
+}
+```
+
+<Note>
+  Record the `order_flow_no` from every successful response and store it alongside the corresponding `orderNo` in your system. You can use `order_flow_no` to look up the payment in the Payment Records endpoint (`GET /api/v1/payment/record`) or to trace the transfer directly with your bank. This field is exclusive to `pay_type = 4` transactions.
+</Note>

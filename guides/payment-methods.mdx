@@ -1,0 +1,199 @@
+---
+title: "Accept Payments with Bocha: Methods and Configuration"
+sidebarTitle: "Payment Methods"
+description: "Configure and use Bocha's supported payment methods including WeChat Pay, Alipay, UnionPay, redemption codes, and bank sub-accounts."
+---
+
+Bocha supports five distinct payment channels so you can meet customers wherever they prefer to pay. Whether you're processing consumer wallets, card networks, promotional vouchers, or enterprise bank transfers, each method maps to a single numeric `pay_type` value in the API — making it straightforward to add, switch, or reconcile payment channels programmatically without reworking your integration.
+
+## Available payment methods
+
+<Tabs>
+
+  <Tab title="WeChat Pay">
+    **pay_type: `0`**
+
+    WeChat Pay is China's most widely used mobile payment network. Customers complete payment inside the WeChat app by scanning a QR code or confirming via their linked bank card.
+
+    **Setup**
+
+    1. Log in to your Bocha Dashboard and navigate to **Settings → Payments**.
+    2. Toggle **WeChat Pay** to enabled and complete the merchant binding flow.
+    3. Save your WeChat merchant ID — Bocha stores it securely and associates it with your API key automatically.
+
+    **Usage**
+
+    Include `"pay_type": 0` in your payment request body. Bocha returns a payment URL or QR code payload in the response `data` field that you present to your customer.
+
+    ```json
+    {
+      "order_no": "ORD20260729001256",
+      "pay_type": 0
+    }
+    ```
+  </Tab>
+
+  <Tab title="Alipay">
+    **pay_type: `1`**
+
+    Alipay is Ant Group's digital wallet and is accepted across millions of merchants in China and internationally. Customers pay by scanning an Alipay QR code or via app redirect.
+
+    **Setup**
+
+    1. In your Dashboard, go to **Settings → Payments** and enable **Alipay**.
+    2. Enter your Alipay app ID and private key to complete merchant verification.
+    3. Bocha validates the credentials and activates the channel for your account.
+
+    **Usage**
+
+    Set `"pay_type": 1` in the payment request body. The response includes an Alipay payment string you can pass directly to the Alipay SDK or display as a QR code.
+
+    ```json
+    {
+      "order_no": "ORD20260729001256",
+      "pay_type": 1
+    }
+    ```
+  </Tab>
+
+  <Tab title="UnionPay">
+    **pay_type: `2`**
+
+    UnionPay is China's national bank card network and supports both debit and credit cards issued by Chinese banks. It is the preferred method for customers who do not use mobile wallets.
+
+    **Setup**
+
+    1. Navigate to **Settings → Payments** in your Dashboard and enable **UnionPay**.
+    2. Complete the UnionPay merchant registration by supplying your business licence and bank account details.
+    3. Once approved (typically 1–3 business days), the channel activates automatically.
+
+    **Usage**
+
+    Set `"pay_type": 2` in your payment request. Bocha returns a UnionPay payment URL that redirects customers to the bank card input form.
+
+    ```json
+    {
+      "order_no": "ORD20260729001256",
+      "pay_type": 2
+    }
+    ```
+  </Tab>
+
+  <Tab title="Redemption Code">
+    **pay_type: `3`**
+
+    Redemption codes (voucher codes) let customers pay using a pre-issued alphanumeric code — commonly distributed in promotional campaigns, bundles, or partner programmes. No bank or wallet configuration is required.
+
+    **Setup**
+
+    No merchant account setup is needed. Issue or distribute codes through the Bocha Dashboard under **Marketing → Vouchers**.
+
+    **Usage**
+
+    Set `"pay_type": 3` and include the customer's code in the `voucher_code` field:
+
+    ```json
+    {
+      "order_no": "ORD20260729001256",
+      "pay_type": 3,
+      "voucher_code": "PROMO-ABCD-1234"
+    }
+    ```
+
+    Bocha validates the code, deducts the face value from the order total, and marks the code as redeemed. If the order amount exceeds the voucher value, the customer is prompted to pay the remainder with another method.
+  </Tab>
+
+  <Tab title="Bank Sub-Account">
+    **pay_type: `4`**
+
+    Bank sub-account payments route funds through a dedicated virtual bank account linked to your verified business identity. This method is suited for B2B transactions and platforms that require traceable fund flows with a unique transaction reference number (`order_flow_no`).
+
+    For full setup instructions, see the [Sub-Accounts guide](/guides/sub-accounts).
+
+    ```json
+    {
+      "order_no": "ORD20260729001256",
+      "pay_type": 4
+    }
+    ```
+  </Tab>
+
+</Tabs>
+
+---
+
+## Checking payment records
+
+Call `GET /api/v1/payment/record` to retrieve a list of payment transactions for your account. This endpoint is useful for reconciliation, auditing, and displaying transaction history to your users.
+
+<CodeGroup>
+
+```bash curl
+curl -G https://api.bocha.ai/api/v1/payment/record \
+  -H "Authorization: Bearer $BOCHA_API_KEY"
+```
+
+```python Python
+import os
+import requests
+
+response = requests.get(
+    "https://api.bocha.ai/api/v1/payment/record",
+    headers={"Authorization": f"Bearer {os.environ['BOCHA_API_KEY']}"},
+)
+
+records = response.json()
+print(records)
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.bocha.ai/api/v1/payment/record", {
+  headers: {
+    "Authorization": `Bearer ${process.env.BOCHA_API_KEY}`,
+  },
+});
+
+const records = await response.json();
+console.log(records);
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "code": 200,
+  "msg": "success",
+  "data": [
+    {
+      "order_code": "ORD20260729001256",
+      "pay_type": 1,
+      "pay_money": 199.80,
+      "order_flow_no": null,
+      "created_at": "2026-07-29T10:12:56Z"
+    },
+    {
+      "order_code": "ORD20260728009871",
+      "pay_type": 4,
+      "pay_money": 850.00,
+      "order_flow_no": "FA3C2E1B-8D47-4A90-B563-0012EF9A7C30",
+      "created_at": "2026-07-28T14:33:10Z"
+    }
+  ]
+}
+```
+
+### Response fields
+
+| Field           | Type    | Description                                                                                       |
+|-----------------|---------|---------------------------------------------------------------------------------------------------|
+| `order_code`    | String  | The order number this payment is associated with.                                                 |
+| `pay_type`      | Integer | Numeric code identifying the payment channel (see the tabs above).                                |
+| `pay_money`     | Decimal | Amount paid in CNY.                                                                               |
+| `order_flow_no` | String  | Unique transaction flow number. Populated only for bank sub-account payments (`pay_type=4`).      |
+| `created_at`    | String  | ISO 8601 timestamp of when the payment was recorded.                                              |
+
+<Note>
+  The `order_flow_no` field is only populated for bank sub-account payments (`pay_type=4`). For all other payment types — WeChat Pay, Alipay, UnionPay, and redemption codes — this field is `null`. Use `order_code` as the universal reconciliation key across all payment methods.
+</Note>
